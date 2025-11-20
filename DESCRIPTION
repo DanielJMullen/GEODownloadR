@@ -1,0 +1,10 @@
+Package: GEODownloadR
+Title: R package for GEODownloadR to download and combine .fastq files for specified GSM IDs
+Version: 0.0.0.9000
+Authors@R: person("Daniel", "Mullen", email = "dmullen@usc.edu", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-7639-0549"))
+Description: The GEODownloadR package contains functions which help the user to download .fastq files from the Gene Expression Omnibus (GEO) given a set of GSM IDs. The functions in the package include the 'identifySRRsFromGSMIDs' function, which pulls SRR IDs associated with the input GSM IDs along with other information about the SRR .fastq files, including file sizes and paths for download from the European Nucleotide Archive (ENA), the 'SRRFastqDownload' function, which takes that information and downloads the file to a local directory of the user's choosing, and the 'combineSRRFastqstoGSMs' which takes the downloaded SRR .fastq files and combines them into .fastq file(s) per GSM ID. These functions also output all their relevant data, including the status of each step, making it easy for the user to check their files were downloaded, and quickly rerun those that didn't work.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Imports: graphics, grDevices, stats, utils, tools, S4Vectors, doParallel, foreach, parallel, Rfastp

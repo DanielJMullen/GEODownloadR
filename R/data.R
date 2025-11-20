@@ -1,0 +1,32 @@
+#' @title exampleDFGEODownloadR
+#' @description An example dataset with data from 3 GSM IDs
+#' @format A data frame with 11 rows and 25 variables:
+#' \describe{
+#'   \item{\code{GSM_IDs}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{GSM_ID_URLs}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{GSE_IDs}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{GSE_ID_URLs}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{SRX_IDs}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{SRX_ID_URLs}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{SRR_IDs}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{SRR_ID_URLs}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{Total_reads}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{Approximate_total_bases}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{Approximate_file_size}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{Upload_date}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{Species_name}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{Sequencing_instrument}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{Experiment_type}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{Sequencing_type}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{Fastq_URLs}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{Fastq_file_names}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{Fastq_file_sizes}}{double COLUMN_DESCRIPTION}
+#'   \item{\code{Fastq_file_first_upload_date}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{Passed_GSE_information}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{Passed_SRX_information}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{Passed_SRR_file_identification}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{Passed_SRR_file_information}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{SRR_file_download_status}}{character COLUMN_DESCRIPTION}
+#'}
+#' @source \url{http://somewhere.important.com/}
+"exampleDFGEODownloadR"
