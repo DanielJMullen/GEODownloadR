@@ -834,8 +834,8 @@
     )
 }
 
-## Identify SRR files associated with GEO GSM IDs:
-
+#' Identify SRR files associated with GEO GSM IDs:
+#'
 #' This function takes GSM IDs provided by the user and identifies the SRRs
 #' associated with them. This function also provides URLs to their corresponding
 #' .fastq files hosted by the European Nucleotide Archive (ENA). If selected,

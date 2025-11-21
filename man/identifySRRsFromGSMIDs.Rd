@@ -2,14 +2,7 @@
 % Please edit documentation in R/identifySRRsFromGSMIDs.R
 \name{identifySRRsFromGSMIDs}
 \alias{identifySRRsFromGSMIDs}
-\title{This function takes GSM IDs provided by the user and identifies the SRRs
-associated with them. This function also provides URLs to their corresponding
-.fastq files hosted by the European Nucleotide Archive (ENA). If selected,
-this function will also query the ENA server to identify the size of these
-.fastq files, which will take awhile to run but is essential for this
-package's download pipeline. This function is the first step in the pipeline
-to download and combine .fastq files associated with the user's GSM IDs of
-interest.}
+\title{Identify SRR files associated with GEO GSM IDs:}
 \usage{
 identifySRRsFromGSMIDs(GSMIDVector, pullFastqFileSizes = TRUE)
 }
