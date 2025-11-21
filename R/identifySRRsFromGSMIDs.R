@@ -957,7 +957,7 @@ identifySRRsFromGSMIDs <- function(
         SRXInformationDFSecondPass <- as.data.frame(
             .SRXInformationFunction(
                 GSMIDValues = uniqueGSMFailedSRXInformation,
-                SRX_ID_URLs = uniqueSRXURLFailedSRXInformation
+                SRXIDURLs = uniqueSRXURLFailedSRXInformation
             )
         )
 
