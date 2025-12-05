@@ -26,6 +26,14 @@ devtools::install_github("DanielJMullen/GEODownloadR")
 
 ## Load the library
 library(GEODownloadR)
+
+## It is possible the Rfastp package may need to be manually installed.
+## If errors are encountered due to this, try installing Rfastp with the
+## following:
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("Rfastp")
 ```
 
 ### Running GEODownloadR
