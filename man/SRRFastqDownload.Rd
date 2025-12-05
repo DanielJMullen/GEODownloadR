@@ -7,7 +7,8 @@
 SRRFastqDownload(
   identifySRRsFromGSMIDsDF,
   localDownloadDirectory = getwd(),
-  downloadSRRWithGSMPresent = FALSE
+  downloadSRRWithGSMPresent = FALSE,
+  SRRDownloadNodeCount = 12
 )
 }
 \arguments{
@@ -25,6 +26,13 @@ to download the .fastq files associated with the SRRs detailed in the
 files even when the final GSM .fastq files associated with those SRRs
 (compiled by the 'combineSRRFastqsToGSMs' function) is present, otherwise set
 to FALSE to not. Defaults to FALSE.}
+
+\item{SRRDownloadNodeCount}{Specify a maximum number of nodes to use when
+downloading SRR .fastqs. Try setting to a relatively
+low number (like 1) if the function is having difficulty in acquiring the
+fastq files (and there are many "FAILED" values in the
+'SRR_file_download_status' column of the returned data frame). Defaults to
+12.}
 }
 \value{
 Downloads and checks the .fastq files to the directory specified as
@@ -47,13 +55,13 @@ files associated with them to a user-selected directory.
 ## 'identifySRRsFromGSMIDs' function to the user's working directory.
 
 ## Load the example dataset.
-exampleDFGEODownloadR <- utils::data(
+utils::data(
     "exampleDFGEODownloadR",
     package = "GEODownloadR"
 )
 
 ## Download the SRR .fastqs. There should be a total of 11 .fastq files
-## donwloaded.
+## downloaded.
 returnValue <- SRRFastqDownload(
     identifySRRsFromGSMIDsDF = exampleDFGEODownloadR
 )

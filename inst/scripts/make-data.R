@@ -10,7 +10,7 @@ exampleGSMVector <- c(
 )
 
 ## Run the 'identifySRRsFromGSMIDs' first to get the SRR .fastq information.
-exampleDFGEODownloadR <- identifySRRsFromGSMIDs(
+exampleDFGEODownloadR <- GEODownloadR::identifySRRsFromGSMIDs(
     GSMIDVector = exampleGSMVector,
     pullFastqFileSizes = TRUE
 )
@@ -20,14 +20,23 @@ if(!dir.exists("./data-raw")) {
     dir.create("./data-raw")
 }
 
+GSMIDValues = exampleDFGEODownloadR$GSM_IDs
+SRRIDValues = exampleDFGEODownloadR$SRR_IDs
+SRRSequencingType = exampleDFGEODownloadR$Sequencing_type
+ftpSRRFileURLs = exampleDFGEODownloadR$Fastq_URLs
+SRRFastqNames = exampleDFGEODownloadR$Fastq_file_names
+SRRFastqFileSizes = exampleDFGEODownloadR$Fastq_file_sizes
+internalDownloadSRRWithGSMPresent = TRUE
+internalLocalDownloadDirectory = "./data-raw"
+internalSRRDownloadNodeCount = 1
+downloadIndices = 1
+
 ## Download the associated SRR .fastqs to the data-raw directory.
-exampleDFGEODownloadR <- SRRFastqDownload(
+exampleDFGEODownloadR <- GEODownloadR::SRRFastqDownload(
     identifySRRsFromGSMIDsDF = exampleDFGEODownloadR,
     localDownloadDirectory = "./data-raw",
     downloadSRRWithGSMPresent = FALSE
 )
-
-## Combining GSMs is not necessary for the example.
 
 ## Check if the data subdirectory exists, and if it doesn't, create it.
 if (!dir.exists("./data")) {

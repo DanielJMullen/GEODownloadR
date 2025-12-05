@@ -6,9 +6,9 @@
 ## gzipped, and thus the resulting GSM fastq file that is made with have the
 ## .gz extension.
 .combineSRRToGSMFunction <- function(
-    SRRInfoAndDownloadFunctionDF,
-    internalLocalDownloadDirectory,
-    internalOutputGSMFastqDirectory
+        SRRInfoAndDownloadFunctionDF,
+        internalLocalDownloadDirectory,
+        internalOutputGSMFastqDirectory
 ) {
 
     ## Get the unique GSM values that appear in the dataframe output by the
@@ -20,8 +20,10 @@
     uniqueGSMIndices <- NULL
 
     ## Create a list of the nodes that will be used, and then register them for
-    ## use with the foreach package. 60 nodes will be used by default.
-    combineGSMClusterList <- parallel::makeCluster(60)
+    ## use with the foreach package. Up to 60 nodes will be used by default.
+    combineGSMClusterList <- parallel::makeCluster(
+        min(length(ftpSRRFileURLs), 60)
+    )
     doParallel::registerDoParallel(combineGSMClusterList)
 
     ## Use foreach() to iterate across the GSM ID values, and extract the
@@ -42,9 +44,8 @@
             paste0(
                 SRRInfoAndDownloadFunctionDF[
                     SRRInfoAndDownloadFunctionDF$GSM_IDs == iterUniqueGSMID,
-                    "SRR_IDs"
-                ],
-                ".fastq.gz"
+                    "Fastq_file_names"
+                ]
             )
         )
 
@@ -142,14 +143,14 @@
                     internalOutputGSMFastqDirectory,
                     paste0(
                         iterUniqueGSMID,
-                        "_1.fastq.gz"
+                        "_2.fastq.gz"
                     )
                 )
 
                 ## Do a check to see if either of the GSM fastq files already
                 ## exist and return a message if they do.
-                if (any(
-                    file.exists(GSMFastqPath1), file.exists(GSMFastqPath1)
+                if (all(
+                    file.exists(GSMFastqPath1), file.exists(GSMFastqPath2)
                 )) {
                     return(
                         "GSM_FASTQ_FILE_ALREADY_PRESENT"
@@ -223,38 +224,74 @@
                     )
                 }
 
-                ## If only a single SRR file is listed for each read direction
-                ## Simply rename the existing SRR files to match the GSM (since
-                ## no files need to be combined).
-                if (length(filesListedRead1) == 1) {
+                ## Create a vector noting whether each of the paired end files needed to
+                ## be created (to better craft return message).
+                pairedEndReturnVector <- c()
 
-                    ## The SRR files are wanted, so copy them and rename the
-                    ## copies after the GSM.
-                    file.copy(
-                        from = filesListedRead1,
-                        to = GSMFastqPath1,
-                        overwrite = TRUE
-                    )
+                ## There may be cases where a paired end file already exists but the
+                ## other doesn't. In that case, note which has been done here.
+                if (!file.exists(GSMFastqPath1)) {
 
-                    file.copy(
-                        from = filesListedRead2,
-                        to = GSMFastqPath2,
-                        overwrite = TRUE
-                    )
-                } else {
+                    ## If only a single SRR file is listed for each read direction
+                    ## Simply rename the existing SRR files to match the GSM (since
+                    ## no files need to be combined).
+                    if (length(filesListedRead1) == 1) {
 
-                    ## If multiple SRR files are included for each read
-                    ## direction, combine them into a single fastq for each
-                    ## direction (named after the GSM) using the
-                    ## Rfastp::catfastq function.
-                    Rfastp::catfastq(
-                        output = GSMFastqPath1,
-                        inputFiles = filesListedRead1
-                    )
+                        ## The SRR files are wanted, so copy them and rename the
+                        ## copies after the GSM.
+                        file.copy(
+                            from = filesListedRead1,
+                            to = GSMFastqPath1,
+                            overwrite = TRUE
+                        )
 
-                    Rfastp::catfastq(
-                        output = GSMFastqPath2,
-                        inputFiles = filesListedRead2
+                    } else {
+
+                        ## If multiple SRR files are included for each read
+                        ## direction, combine them into a single fastq for each
+                        ## direction (named after the GSM) using the
+                        ## Rfastp::catfastq function.
+                        Rfastp::catfastq(
+                            output = GSMFastqPath1,
+                            inputFiles = filesListedRead1
+                        )
+                    }
+
+                    ## Add to the return vector.
+                    pairedEndReturnVector <- c("end1")
+                }
+
+                if (!file.exists(GSMFastqPath2)) {
+
+                    ## If only a single SRR file is listed for each read direction
+                    ## Simply rename the existing SRR files to match the GSM (since
+                    ## no files need to be combined).
+                    if (length(filesListedRead2) == 1) {
+
+                        ## The SRR files are wanted, so copy them and rename the
+                        ## copies after the GSM.
+                        file.copy(
+                            from = filesListedRead2,
+                            to = GSMFastqPath2,
+                            overwrite = TRUE
+                        )
+
+                    } else {
+
+                        ## If multiple SRR files are included for each read
+                        ## direction, combine them into a single fastq for each
+                        ## direction (named after the GSM) using the
+                        ## Rfastp::catfastq function.
+                        Rfastp::catfastq(
+                            output = GSMFastqPath2,
+                            inputFiles = filesListedRead2
+                        )
+                    }
+
+                    ## Add to the return vector.
+                    pairedEndReturnVector <- c(
+                        pairedEndReturnVector,
+                        "end2"
                     )
                 }
 
@@ -264,9 +301,28 @@
                     file.exists(GSMFastqPath1) && file.exists(GSMFastqPath2)
                 ) {
                     return("PASS")
+                } else if ("end1" %in% pairedEndReturnVector) {
+
+                    ## Make sure the first paired end fastq was created.
+                    if (file.exists(GSMFastqPath1)) {
+                        return("PASS_PAIRED_END_1_CREATED")
+                    } else {
+                        return("GSM_FASTQ_NOT_CREATED")
+                    }
+
+                } else if ("end2" %in% pairedEndReturnVector) {
+
+                    ## Make sure the second paired end fastq was created.
+                    if (file.exists(GSMFastqPath1)) {
+                        return("PASS_PAIRED_END_2_CREATED")
+                    } else {
+                        return("GSM_FASTQ_NOT_CREATED")
+                    }
+
                 } else {
                     return("GSM_FASTQ_NOT_CREATED")
                 }
+
             } else if (sequencingFormat == "SINGLE") {
 
                 ## Determine the fastq file that will be created for the GSM.
@@ -334,6 +390,9 @@
     ## unused connections, which doesn't affect how the function works.
     suppressWarnings(parallel::stopCluster(combineGSMClusterList))
 
+    ## Set the names of the combineGSMVec to be the unique GSM IDs.
+    names(combineGSMVec) <- uniqueGSMIDValues
+
     ## Return the combineGSMVec.
     return(combineGSMVec)
 }
@@ -359,10 +418,11 @@
 #' user's working directory.
 #' @return Combines the previously downloaded SRR .fastq files in the directory
 #' specified as the `localDownloadDirectory` into .fastq files for each GSM ID.
-#' These GSM IDs will be deposited in the directory  The function will also return the dataframe
-#' given as the `identifySRRsFromGSMIDsDF` argument with an additional column
-#' named "SRR_file_download_status" noting the status of the download of each
-#' .fastq file.
+#' These GSM IDs will be deposited in the directory specified as the
+#' `outputGSMFastqDirectory`. The function will also return the data frame given
+#' as the `SRRFastqDownloadDF` with an additional column named
+#' "GSMCombinationStatus" noting the status of the combination of the .fastq
+#' files for each GSM ID present.
 #' @export
 #'
 #' @examplesIf interactive()
@@ -374,7 +434,7 @@
 #' ## WORKING DIRECTORY.
 #'
 #' ## Load the example dataset.
-#' exampleDFGEODownloadR <- utils::data(
+#' utils::data(
 #'     "exampleDFGEODownloadR",
 #'     package = "GEODownloadR"
 #' )
@@ -404,7 +464,8 @@ combineSRRFastqsToGSMs <- function(
             "GSM_IDs",
             "SRR_IDs",
             "Sequencing_type",
-            "Fastq_file_sizes"
+            "Fastq_file_sizes",
+            "Fastq_file_names"
         ),
         SRRFastqDownloadDF
     )
@@ -480,11 +541,15 @@ combineSRRFastqsToGSMs <- function(
     ## Run the internal .combineSRRToGSMFunction to combine the SRR .fastqs into
     ## those for the GSM IDs themselves. Save the output vector as a new column
     ## in the `SRRFastqDownloadDF` data frame.
-    SRRFastqDownloadDF$GSMCombinationStatus <- .combineSRRToGSMFunction(
+    GSMCombinationStatusVec <- .combineSRRToGSMFunction(
         SRRInfoAndDownloadFunctionDF = SRRFastqDownloadDF,
         internalLocalDownloadDirectory = localDownloadDirectory,
         internalOutputGSMFastqDirectory = outputGSMFastqDirectory
     )
+
+    SRRFastqDownloadDF$GSMCombinationStatus <- GSMCombinationStatusVec[
+        SRRFastqDownloadDF$GSM_IDs
+    ]
 
     ## Return the data frame with the combination status to the user.
     return(SRRFastqDownloadDF)

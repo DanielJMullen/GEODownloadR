@@ -4,7 +4,11 @@
 \alias{identifySRRsFromGSMIDs}
 \title{Identify SRR files associated with GEO GSM IDs:}
 \usage{
-identifySRRsFromGSMIDs(GSMIDVector, pullFastqFileSizes = TRUE)
+identifySRRsFromGSMIDs(
+  GSMIDVector,
+  pullFastqFileSizes = TRUE,
+  SRRInformationNodeCount = 12
+)
 }
 \arguments{
 \item{GSMIDVector}{Specify a vector of sample accession numbers to
@@ -16,6 +20,14 @@ in the form "GSM" followed by the numbers associated with the sample, such as
 associated with each SRR, otherwise set to FALSE to not. This option will
 take awhile to run but is essential to successfully download and combine the
 fastq files later. Defaults to TRUE.}
+
+\item{SRRInformationNodeCount}{Specify a maximum number of nodes to use when
+getting SRR information (particularly the SRR file sizes). This will only
+have an effect if \code{pullFastqFileSizes} is TRUE. Try setting to a relatively
+low number (like 1) if the function is having difficulty in acquiring the
+fastq file size (and there are many "FAILED" values in the
+'Passed_SRR_file_information' column of the returned data frame). Defaults to
+12.}
 }
 \value{
 Returns a dataframe containing a dataframe with information about the

@@ -9,8 +9,10 @@
     GSMIndices <- NULL
 
     ## Create a list of the nodes that will be used, and then register them for
-    ## use with the foreach package. 60 nodes will be used by default.
-    makeGSEClusterList <- parallel::makeCluster(60)
+    ## use with the foreach package. Up to 60 nodes will be used.
+    makeGSEClusterList <- parallel::makeCluster(
+        min(length(GSMIDValues), 60)
+    )
     doParallel::registerDoParallel(makeGSEClusterList)
 
     ## Use foreach() to iterate across the GSM ID values, and extract the
@@ -41,19 +43,15 @@
 
         while (GSEInfoFailCount < 3 && is.null(GSMPage)) {
 
-            ## Establish a connection to the specified GSM's page.
-            GSMPageURLConnection <- url(GSMPageURL)
-
             ## Try reading the webpage for the given GSM. If this fails, sleep
-            ## 3 seconds before proceeding.
+            ## 5 seconds before proceeding.
             tryCatch({
-                GSMPage <- readLines(GSMPageURLConnection)
+                GSMPage <- readLines(GSMPageURL)
+            }, warning = function(cond) {
+                Sys.sleep(5)
             }, error = function(cond) {
-                Sys.sleep(3)
+                Sys.sleep(5)
             })
-
-            ## Close the connection to the GSM's page.
-            close(GSMPageURLConnection)
 
             ## Increment the GSEInfoFailCount.
             GSEInfoFailCount <- (GSEInfoFailCount + 1)
@@ -65,20 +63,24 @@
         ## relevant information).
         if (is.null(GSMPage)) {
             return(
-                c(
-                    iterGSMIDValue,
-                    GSMPageURL,
-                    rep(NA, 4),
-                    "FAIL"
+                rbind(
+                    c(
+                        iterGSMIDValue,
+                        GSMPageURL,
+                        rep(NA, 4),
+                        "FAIL"
+                    )
                 )
             )
         } else if (length(grep('GSE', GSMPage)) == 0) {
             return(
-                c(
-                    iterGSMIDValue,
-                    GSMPageURL,
-                    rep(NA, 4),
-                    "FAIL"
+                rbind(
+                    c(
+                        iterGSMIDValue,
+                        GSMPageURL,
+                        rep(NA, 4),
+                        "FAIL"
+                    )
                 )
             )
         }
@@ -172,14 +174,16 @@
         ## GSEPageURL, and SRXURL. Additionally, return a seventh element
         ## which we set to "PASS" for now, so we know this step worked.
         return(
-            c(
-                iterGSMIDValue,
-                GSMPageURL,
-                GSEValueString,
-                GSEPageURL,
-                SRXID,
-                SRXURL,
-                "PASS"
+            rbind(
+                c(
+                    iterGSMIDValue,
+                    GSMPageURL,
+                    GSEValueString,
+                    GSEPageURL,
+                    SRXID,
+                    SRXURL,
+                    "PASS"
+                )
             )
         )
     }
@@ -188,6 +192,9 @@
     ## suppressWarnings is used to silence a warning that relates to closing
     ## unused connections, which doesn't affect how the function works.
     suppressWarnings(parallel::stopCluster(makeGSEClusterList))
+
+    ## Transform the output into a data frame.
+    GSMInfoDF <- data.frame(GSMInfoDF)
 
     ## Set the rownames of the dataframe to be output as the GSMIDValues.
     row.names(GSMInfoDF) <- GSMIDValues
@@ -219,8 +226,10 @@
     SRXURLIndices <- NULL
 
     ## Create a list of the nodes that will be used, and then register them for
-    ## use with the foreach package. 60 nodes will be used by default.
-    makeSRXClusterList <- parallel::makeCluster(60)
+    ## use with the foreach package. Up to 60 nodes will be used by default.
+    makeSRXClusterList <- parallel::makeCluster(
+        min(length(SRXIDURLs), 60)
+    )
     doParallel::registerDoParallel(makeSRXClusterList)
 
     ## Use foreach() to iterate across the SRX URLs, and extract the
@@ -243,11 +252,13 @@
         ## induced as we can't load an NA URL.
         if(is.na(iterSRXURLValue)) {
             return(
-                c(
-                    iterGSMIDValue,
-                    iterSRXURLValue,
-                    rep(NA, 10),
-                    "FAIL"
+                rbind(
+                    c(
+                        iterGSMIDValue,
+                        iterSRXURLValue,
+                        rep(NA, 10),
+                        "FAIL"
+                    )
                 )
             )
         }
@@ -262,21 +273,15 @@
 
         while (SRXInfoFailCount < 3 && is.null(SRXPage)) {
 
-            ## Establish a connection to the specified SRX's page.
-            SRXPageURLConnection <- url(iterSRXURLValue)
-
             ## Try reading the webpage for the given SRX. If this fails, sleep
-            ## 3 seconds before proceeding. NOTE: supressWarnings is included to
+            ## 5 seconds before proceeding. NOTE: supressWarnings is included to
             ## suppress an irrelevant warning message about an incomplete final
             ## line when reading the SRX page URL.
             tryCatch({
-                SRXPage <- suppressWarnings(readLines(SRXPageURLConnection))
+                SRXPage <- suppressWarnings(readLines(iterSRXURLValue))
             }, error = function(cond) {
-                Sys.sleep(3)
+                Sys.sleep(5)
             })
-
-            ## Close the connection to the SRX's page.
-            close(SRXPageURLConnection)
 
             ## Increment the SRRInfoFailCount.
             SRXInfoFailCount <- (SRXInfoFailCount + 1)
@@ -290,20 +295,24 @@
         ## relevant information).
         if (is.null(SRXPage)) {
             return(
-                c(
-                    iterGSMIDValue,
-                    iterSRXURLValue,
-                    rep(NA, 10),
-                    "FAIL"
+                rbind(
+                    c(
+                        iterGSMIDValue,
+                        iterSRXURLValue,
+                        rep(NA, 10),
+                        "FAIL"
+                    )
                 )
             )
         } else if (length(grep('SRR', SRXPage)) == 0) {
             return(
-                c(
-                    iterGSMIDValue,
-                    iterSRXURLValue,
-                    rep(NA, 10),
-                    "FAIL"
+                rbind(
+                    c(
+                        iterGSMIDValue,
+                        iterSRXURLValue,
+                        rep(NA, 10),
+                        "FAIL"
+                    )
                 )
             )
         }
@@ -504,6 +513,9 @@
     ## unused connections, which doesn't affect how the function works.
     suppressWarnings(parallel::stopCluster(makeSRXClusterList))
 
+    ## Transform the output into a data frame.
+    SRXInformationDF <- data.frame(SRXInformationDF)
+
     ## Set the rownames of the dataframe to be output as the SRR values.
     row.names(SRXInformationDF) <- SRXInformationDF[,3]
 
@@ -543,8 +555,10 @@
     SRRIndices <- NULL
 
     ## Create a list of the nodes that will be used, and then register them for
-    ## use with the foreach package. 60 nodes will be used by default.
-    makeSRRIDClusterList <- parallel::makeCluster(60)
+    ## use with the foreach package. Up to 60 nodes will be used by default.
+    makeSRRIDClusterList <- parallel::makeCluster(
+        min(length(SRRIDValues), 60)
+    )
     doParallel::registerDoParallel(makeSRRIDClusterList)
 
     ## Use foreach() to iterate across the SRR URLs, and extract the
@@ -571,11 +585,13 @@
         ## induced as we can't load an NA URL.
         if(is.na(iterSRRIDValue)) {
             return(
-                c(
-                    iterGSMIDValue,
-                    iterSRRIDValue,
-                    rep(NA, 2),
-                    "FAIL"
+                rbind(
+                    c(
+                        iterGSMIDValue,
+                        iterSRRIDValue,
+                        rep(NA, 2),
+                        "FAIL"
+                    )
                 )
             )
         }
@@ -591,7 +607,7 @@
         while (SRRInfoFailCount < 3 && is.null(SRRManifest)) {
 
             ## Try reading the webpage with info on SRRs.
-            ## If this fails, sleep 3 seconds before proceeding.
+            ## If this fails, sleep 5 seconds before proceeding.
             tryCatch({
                 SRRManifest <- read.table(
                     paste0(
@@ -606,7 +622,7 @@
                     header = TRUE
                 )
             }, error = function(cond) {
-                Sys.sleep(3)
+                Sys.sleep(5)
             })
 
             ## Increment the SRRInfoFailCount.
@@ -623,29 +639,35 @@
         ## relevant information).
         if (is.null(SRRManifest)) {
             return(
-                c(
-                    iterGSMIDValue,
-                    iterSRRIDValue,
-                    rep(NA, 2),
-                    "FAIL"
+                rbind(
+                    c(
+                        iterGSMIDValue,
+                        iterSRRIDValue,
+                        rep(NA, 2),
+                        "FAIL"
+                    )
                 )
             )
         } else if (!("fastq_ftp" %in% colnames(SRRManifest))) {
             return(
-                c(
-                    iterGSMIDValue,
-                    iterSRRIDValue,
-                    rep(NA, 2),
-                    "FAIL"
+                rbind(
+                    c(
+                        iterGSMIDValue,
+                        iterSRRIDValue,
+                        rep(NA, 2),
+                        "FAIL"
+                    )
                 )
             )
         } else if (length(grep(iterSRRIDValue, SRRManifest$fastq_ftp)) == 0) {
             return(
-                c(
-                    iterGSMIDValue,
-                    iterSRRIDValue,
-                    rep(NA, 2),
-                    "FAIL"
+                rbind(
+                    c(
+                        iterGSMIDValue,
+                        iterSRRIDValue,
+                        rep(NA, 2),
+                        "FAIL"
+                    )
                 )
             )
         }
@@ -694,144 +716,213 @@
     return(SRRFileIDDF)
 }
 
-## An internal function which takes the ftp paths to files, pulls relevant
-## information on them, particularly the individual file size.
-.SRRInformationFunction <- function(
+## An internal function which takes the SRR page URLs derived for the original
+## GSM values input by the user, and returns the individual SRR files and their
+## ftp links for downloading.
+## The errorWatiTime
+.SRRFileInformationFunction <- function(
     GSMIDValues,
     SRRIDValues,
     SRRSequencingType,
     ftpSRRFileURLs,
     SRRFastqNames,
-    errorWaitTime
+    internalSRRInformationNodeCount
 ) {
-    ## Check if the ftpSRRFileURLs is NA. If so, we will need to cancel out of
-    ## this step to prevent an error from being induced as we can't load an NA
-    ## URL.
-    if(is.na(ftpSRRFileURLs)) {
+
+    ## Initialize a holding value for the SRRInformationIndices, which will
+    ## be used shortly when setting up parallelization using foreach().
+    SRRInformationIndices <- NULL
+
+    ## Create a list of the nodes that will be used, and then register them for
+    ## use with the foreach package.
+    makeSRRInformationClusterList <- parallel::makeCluster(
+        min(length(SRRIDValues), internalSRRInformationNodeCount)
+    )
+    doParallel::registerDoParallel(makeSRRInformationClusterList)
+
+    ## Use foreach() to iterate across the SRR URLs, and extract the
+    ## relevant information from each, then combine this information into a
+    ## dataframe using rbind.
+    SRRFileInformationDF <- foreach::foreach(
+        SRRInformationIndices = seq_along(SRRIDValues),
+        .combine = rbind
+    ) %dopar% {
+
+        ## Get the associated GSM ID value, akin to a for loop.
+        iterGSMIDValue <- GSMIDValues[SRRInformationIndices]
+
+        ## Get the individual SRR ID to use for this iteration, akin to a
+        ## for loop.
+        iterSRRIDValue <- SRRIDValues[SRRInformationIndices]
+
+        ## Get the type of sequencing (single or paired end) that was done for
+        ## the given SRR.
+        iterSRRSequencingTypeValue <- SRRSequencingType[SRRInformationIndices]
+
+        ## Get the URL to the individual SRR fastq file.
+        iterFTPSRRFileURL <- ftpSRRFileURLs[SRRInformationIndices]
+
+        ## Get the individual SRR fastq file name.
+        iterSRRFastqName <- SRRFastqNames[SRRInformationIndices]
+
+        ## Check if the iterFTPSRRFileURL is NA. If so, we will need to cancel
+        ## out of this step to prevent an error from being induced as we can't
+        ## load an NA URL.
+        if(is.na(iterFTPSRRFileURL)) {
+            return(
+                rbind(
+                    c(
+                        iterGSMIDValue,
+                        iterSRRIDValue,
+                        iterSRRSequencingTypeValue,
+                        iterFTPSRRFileURL,
+                        iterSRRFastqName,
+                        rep(NA, 2),
+                        "FAIL"
+                    )
+                )
+            )
+        }
+
+        ## Now load the text of the ftp pages. This will be used to extract the
+        ## exact size of the files.
+
+        ## Set up a fail count - the function is designed to try accessing
+        ## information 3 times. Also, create an empty FTPSRRPage to load text
+        ## into - if this function fails, we can also check if this variable
+        ## remains NULL to see if information from the page was successfully
+        ## loaded.
+        FTPSRRInfoFailCount <- 0
+        FTPSRRPage <- NULL
+
+        while (FTPSRRInfoFailCount < 3 && is.null(FTPSRRPage)) {
+
+            ## Try reading the data for the given SRR using the getURL()
+            ## function from the RCurl package. To set this up, we need to
+            ## strip the fastq file from the iterFTPSRRFileURL, and add back
+            ## the trailing "/".If this fails, sleep 5 seconds before
+            ## proceeding.
+            tryCatch({
+                FTPSRRPage <- readLines(paste0(dirname(iterFTPSRRFileURL),"/"))
+            }, warning= function(cond) {
+                Sys.sleep(5)
+            }, error = function(cond) {
+                Sys.sleep(5)
+            })
+
+            ## Increment the ftpSRRInfoFailCount.
+            FTPSRRInfoFailCount <- (FTPSRRInfoFailCount + 1)
+
+            ## Wait an additional 5 seconds to avoid overloading the site.
+            Sys.sleep(5)
+        }
+
+        ## There are two potential fail cases to account for. First, where a
+        ## page is never loaded, and second where the SRR value is not in
+        ## the database (this I imagine is hard to come across since we pull
+        ## the value from a valid GSM/SRX ID, but just in case I've included
+        ## the check here) and a generic page is loaded instead (which will
+        ## not have relevant information).
+        if (is.null(FTPSRRPage)) {
+            return(
+                rbind(
+                    c(
+                        iterGSMIDValue,
+                        iterSRRIDValue,
+                        iterSRRSequencingTypeValue,
+                        iterFTPSRRFileURL,
+                        iterSRRFastqName,
+                        rep(NA, 2),
+                        "FAIL"
+                    )
+                )
+            )
+        } else if (length(grep(iterSRRFastqName, FTPSRRPage)) == 0) {
+            return(
+                rbind(
+                    c(
+                        iterGSMIDValue,
+                        iterSRRIDValue,
+                        iterSRRSequencingTypeValue,
+                        iterFTPSRRFileURL,
+                        iterSRRFastqName,
+                        rep(NA, 2),
+                        "FAIL"
+                    )
+                )
+            )
+        }
+
+        ## Because two (or rarely, more) files may be listed under a single SRR
+        ## ftp page if the experiment happens to be paired, we will need to
+        ## determine which entry we are looking at.
+        fileN <- grep(
+            iterSRRFastqName,
+            unlist(
+                strsplit(
+                    FTPSRRPage,
+                    "\n"
+                )
+            )
+        )
+
+        ## The page text is loaded as one big string, so we will need to
+        ## strsplit it in order to extract the parts of interest.
+        FTPSRRPageStrsplit <- strsplit(
+            unlist(strsplit(FTPSRRPage, '\n')), ' +'
+        )
+
+        ## The size of the given file is in the 5th element of each list.
+        SRRFastqFileSize <- as.numeric(
+            vapply(FTPSRRPageStrsplit, '[', '', 5)[[fileN]]
+        )
+
+        ## The dates of first upload can be created by pasting elements
+        ## 6-8.
+        SRRFastqFileFirstDate <- paste(
+            vapply(FTPSRRPageStrsplit, '[', '', 6)[[fileN]],
+            vapply(FTPSRRPageStrsplit, '[', '', 7)[[fileN]],
+            vapply(FTPSRRPageStrsplit, '[', '', 8)[[fileN]],
+            sep = "-"
+        )
+
+        ## Do the return if it is successful as of far.
         return(
-            c(
-                GSMIDValues,
-                SRRIDValues,
-                SRRSequencingType,
-                ftpSRRFileURLs,
-                SRRFastqNames,
-                rep(NA, 2),
-                "FAIL"
+            rbind(
+                c(
+                    iterGSMIDValue,
+                    iterSRRIDValue,
+                    iterSRRSequencingTypeValue,
+                    iterFTPSRRFileURL,
+                    iterSRRFastqName,
+                    SRRFastqFileSize,
+                    SRRFastqFileFirstDate,
+                    "PASS"
+                )
             )
         )
     }
 
-    ## Now load the text of the ftp pages. This will be used to extract the
-    ## exact size of the files.
+    ## Close the cluster list.
+    ## suppressWarnings is used to silence a warning that relates to closing
+    ## unused connections, which doesn't affect how the function works.
+    suppressWarnings(parallel::stopCluster(makeSRRInformationClusterList))
 
-    ## If getSRRQuick is FALSE, don't try to load the page, instead
-    ## proceed directly to the download section without checking the file size.
-
-    ## Set up a fail count - the function is designed to try accessing
-    ## information 3 times. Also, create an empty FTPSRRPage to load text
-    ## into - if this function fails, we can also check if this variable
-    ## remains NULL to see if information from the page was successfully
-    ## loaded.
-    FTPSRRInfoFailCount <- 0
-    FTPSRRPage <- NULL
-
-    while (FTPSRRInfoFailCount < 3 && is.null(FTPSRRPage)) {
-
-        ## Try reading the data for the given SRR using the getURL()
-        ## function from the RCurl package. To set this up, we need to
-        ## strip the fastq file from the ftpSRRURLValue, and add back
-        ## the trailing "/".If this fails, sleep 5 seconds before
-        ## proceeding.
-        tryCatch({
-            FTPSRRPage <- RCurl::getURL(
-                paste0(dirname(ftpSRRFileURLs),"/")
-            )
-        }, error = function(cond) {
-            Sys.sleep(errorWaitTime)
-        })
-
-        ## Increment the ftpSRRInfoFailCount.
-        FTPSRRInfoFailCount <- (FTPSRRInfoFailCount + 1)
-    }
-
-    ## There are two potential fail cases to account for. First, where a
-    ## page is never loaded, and second where the SRR value is not in
-    ## the database (this I imagine is hard to come across since we pull
-    ## the value from a valid GSM/SRX ID, but just in case I've included
-    ## the check here) and a generic page is loaded instead (which will
-    ## not have relevant information).
-    if (is.null(FTPSRRPage)) {
-        return(
-            c(
-                GSMIDValues,
-                SRRIDValues,
-                SRRSequencingType,
-                ftpSRRFileURLs,
-                SRRFastqNames,
-                rep(NA, 2),
-                "FAIL"
-            )
-        )
-    } else if (length(grep(SRRFastqNames, FTPSRRPage)) == 0) {
-        return(
-            c(
-                GSMIDValues,
-                SRRIDValues,
-                SRRSequencingType,
-                ftpSRRFileURLs,
-                SRRFastqNames,
-                rep(NA, 2),
-                "FAIL"
-            )
-        )
-    }
-
-    ## Because two (or rarely, more) files may be listed under a single SRR ftp
-    ## page if the experiment happens to be paired, we will need to determine
-    ## which entry we are looking at.
-    fileN <- grep(
-        SRRFastqNames,
-        unlist(
-            strsplit(
-                FTPSRRPage,
-                "\n"
-            )
-        )
+    ## Set the colnames of the dataframe to describe the data contained in each
+    ## column:
+    colnames(SRRFileInformationDF) <- c(
+        "GSM_IDs",
+        "SRR_IDs",
+        "Sequencing_type",
+        "Fastq_URLs",
+        "Fastq_file_names",
+        "Fastq_file_sizes",
+        "Fastq_file_first_upload_date",
+        "Passed_SRR_file_information"
     )
 
-    ## The page text is loaded as one big string, so we will need to
-    ## strsplit it in order to extract the parts of interest.
-    FTPSRRPageStrsplit <- strsplit(
-        unlist(strsplit(FTPSRRPage, '\n')), ' +'
-    )
-
-    ## The size of the given file is in the 5th element of each list.
-    SRRFastqFileSize <- as.numeric(
-        vapply(FTPSRRPageStrsplit, '[', '', 5)[[fileN]]
-    )
-
-    ## The dates of first upload can be created by pasting elements
-    ## 6-8.
-    SRRFastqFileFirstDate <- paste(
-        vapply(FTPSRRPageStrsplit, '[', '', 6)[[fileN]],
-        vapply(FTPSRRPageStrsplit, '[', '', 7)[[fileN]],
-        vapply(FTPSRRPageStrsplit, '[', '', 8)[[fileN]],
-        sep = "-"
-    )
-
-    ## Do the return:
-    return(
-        c(
-            GSMIDValues,
-            SRRIDValues,
-            SRRSequencingType,
-            ftpSRRFileURLs,
-            SRRFastqNames,
-            SRRFastqFileSize,
-            SRRFastqFileFirstDate,
-            "PASS"
-        )
-    )
+    ## Return the SRRFileInformationDF.
+    return(SRRFileInformationDF)
 }
 
 #' Identify SRR files associated with GEO GSM IDs:
@@ -853,6 +944,13 @@
 #' associated with each SRR, otherwise set to FALSE to not. This option will
 #' take awhile to run but is essential to successfully download and combine the
 #' fastq files later. Defaults to TRUE.
+#' @param SRRInformationNodeCount Specify a maximum number of nodes to use when
+#' getting SRR information (particularly the SRR file sizes). This will only
+#' have an effect if `pullFastqFileSizes` is TRUE. Try setting to a relatively
+#' low number (like 1) if the function is having difficulty in acquiring the
+#' fastq file size (and there are many "FAILED" values in the
+#' 'Passed_SRR_file_information' column of the returned data frame). Defaults to
+#' 12.
 #' @return Returns a dataframe containing a dataframe with information about the
 #' SRR files associated with the GSM IDs specified in the `GSMIDVector`,
 #' including paths to their associated .fastq files on the ENA server.
@@ -868,7 +966,8 @@
 
 identifySRRsFromGSMIDs <- function(
     GSMIDVector,
-    pullFastqFileSizes = TRUE
+    pullFastqFileSizes = TRUE,
+    SRRInformationNodeCount = 12
 ) {
 
     ## Verify the GSMIDVector argument.
@@ -893,9 +992,17 @@ identifySRRsFromGSMIDs <- function(
         )
     }
 
+    ## Verify the SRRInformationNodeCount argument.
+    if (!.isSinglePositiveInteger(SRRInformationNodeCount)) {
+        stop(
+            "The `SRRInformationNodeCount` argument must be a singular ",
+            "positive integer value."
+        )
+    }
+
     ## Run the .GSEInfoFunction() to pull infomration on the GSE and SRX pages
     ## associated with each GSMID.
-    GSEInformationDF <- as.data.frame(.GSEInformationFunction(GSMIDVector))
+    GSEInformationDF <- .GSEInformationFunction(GSMIDVector)
 
     ## Do a second pass at downloading by taking the GSMs which failed the
     ## first time and re-running those through the .GSEInformationFunction.
@@ -908,8 +1015,8 @@ identifySRRsFromGSMIDs <- function(
     ## for those GSMs in the output DF.
     if (length(failedGSEInformationDFIters) > 0) {
 
-        GSEInformationDFSecondPass <- as.data.frame(
-            .GSEInformationFunction(GSMIDVector[failedGSEInformationDFIters])
+        GSEInformationDFSecondPass <- .GSEInformationFunction(
+            GSMIDVector[failedGSEInformationDFIters]
         )
 
         GSEInformationDF[
@@ -921,11 +1028,9 @@ identifySRRsFromGSMIDs <- function(
     ## previous .GSEInformationFunction to pull information about the SRX, such
     ## as the total reads, approximate bases and file sizes, species,
     ## sequencing instrument, etc.
-    SRXInformationDF <- as.data.frame(
-        .SRXInformationFunction(
-            GSMIDValues = GSMIDVector,
-            SRXIDURLs = GSEInformationDF$SRX_ID_URLs
-        )
+    SRXInformationDF <- .SRXInformationFunction(
+        GSMIDValues = GSMIDVector,
+        SRXIDURLs = GSEInformationDF$SRX_ID_URLs
     )
 
     ## Do a second pass at downloading by taking the GSMs which failed the
@@ -954,11 +1059,9 @@ identifySRRsFromGSMIDs <- function(
         )
 
         ## Rerun the results for the unique values that failed.
-        SRXInformationDFSecondPass <- as.data.frame(
-            .SRXInformationFunction(
-                GSMIDValues = uniqueGSMFailedSRXInformation,
-                SRXIDURLs = uniqueSRXURLFailedSRXInformation
-            )
+        SRXInformationDFSecondPass <- .SRXInformationFunction(
+            GSMIDValues = uniqueGSMFailedSRXInformation,
+            SRXIDURLs = uniqueSRXURLFailedSRXInformation
         )
 
         ## Replace all entries with at least one failure with the new results.
@@ -1064,19 +1167,19 @@ identifySRRsFromGSMIDs <- function(
     ## the information pull.
     if (pullFastqFileSizes) {
 
-        ## Run the .SRRInformationFunction to get the fastq file sizes and their
-        ## date of upload.
-        SRRInformationDF <- mapply(
-            FUN = .SRRInformationFunction,
+        ## Run the .SRRFileInformationFunction to get the fastq file sizes and
+        ## their date of upload.
+        SRRInformationDF <- .SRRFileInformationFunction(
             GSMIDValues = SRRDFMerge$GSM_IDs,
             SRRIDValues = SRRDFMerge$SRR_IDs,
             SRRSequencingType = SRRDFMerge$Sequencing_type,
             ftpSRRFileURLs = SRRDFMerge$Fastq_URLs,
             SRRFastqNames = SRRDFMerge$Fastq_file_names,
-            MoreArgs = list("errorWaitTime" = 30)
+            internalSRRInformationNodeCount = SRRInformationNodeCount
         )
 
-        SRRInformationDF <- as.data.frame(t(SRRInformationDF))
+        SRRInformationDF <- as.data.frame(SRRInformationDF)
+
         colnames(SRRInformationDF) <- c(
             "GSM_IDs",
             "SRR_IDs",
@@ -1095,12 +1198,11 @@ identifySRRsFromGSMIDs <- function(
         )
 
         ## If there are any files which did not pull information properly, do
-        ## another pass at using the .SRRInformationFunction function on them,
-        ## and replace the information for those files.
+        ## another pass at using the .SRRFileInformationFunction function on
+        ## them, and replace the information for those files.
         if (length(failedSRRInformationDFIters) > 0) {
 
-            SRRInformationDFSecondPass <- mapply(
-                FUN = .SRRInformationFunction,
+            SRRInformationDFSecondPass <- .SRRFileInformationFunction(
                 GSMIDValues = SRRDFMerge$GSM_IDs[
                     failedSRRInformationDFIters
                 ],
@@ -1116,11 +1218,11 @@ identifySRRsFromGSMIDs <- function(
                 SRRFastqNames = SRRDFMerge$Fastq_file_names[
                     failedSRRInformationDFIters
                 ],
-                MoreArgs = list("errorWaitTime" = 30)
+                internalSRRInformationNodeCount = SRRInformationNodeCount
             )
 
             SRRInformationDFSecondPass <- as.data.frame(
-                t(SRRInformationDFSecondPass)
+                SRRInformationDFSecondPass
             )
 
             colnames(SRRInformationDFSecondPass) <- c(

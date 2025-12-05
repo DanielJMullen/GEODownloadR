@@ -10,9 +10,9 @@
     ftpSRRFileURLs,
     SRRFastqNames,
     SRRFastqFileSizes,
-    downloadErrorWaitTime, # This exsits to easily modulate in the future
     internalDownloadSRRWithGSMPresent = FALSE,
-    internalLocalDownloadDirectory = NULL
+    internalLocalDownloadDirectory = NULL,
+    internalSRRDownloadNodeCount
 ) {
 
     ## Initialize a holding value for the downloadIndices, which will be used
@@ -20,8 +20,10 @@
     downloadIndices <- NULL
 
     ## Create a list of the nodes that will be used, and then register them for
-    ## use with the foreach package. 12 nodes will be used by default.
-    makeDownloadClusterList <- parallel::makeCluster(12)
+    ## use with the foreach package.
+    makeDownloadClusterList <- parallel::makeCluster(
+        min(length(ftpSRRFileURLs), internalSRRDownloadNodeCount)
+    )
     doParallel::registerDoParallel(makeDownloadClusterList)
 
     ## Use foreach() to iterate across the SRR URLs, and download the file to
@@ -178,26 +180,27 @@
                         ## the curl implementation of download.file() as it
                         ## relates only to the status of the download.
                         tryCatch ({
-                            # supressMessages(
-                            download.file(
-                                iterFTPSRRFileURL,
-                                destfile = iterSRRFileDownloadPath,
-                                method = "curl",
-                                mode = "wb"
+                            supressMessages(
+                                download.file(
+                                    iterFTPSRRFileURL,
+                                    destfile = iterSRRFileDownloadPath,
+                                    method = "curl",
+                                    mode = "wb"
+                                )
                             )
-                            # )
                         }, error = function(cond) {
-                            Sys.sleep(downloadErrorWaitTime)
+                            Sys.sleep(5)
                         })
 
                         ## Increment the iterSRRDownloadFailCount.
                         iterSRRDownloadFailCount <- (
                             iterSRRDownloadFailCount + 1
                         )
-                    }
 
-                    ## On success or error out, wait 5 seconds standard.
-                    Sys.sleep(5)
+                        ## Wait an additional 5 seconds to avoid overloading the
+                        ## site.
+                        Sys.sleep(5)
+                    }
 
                     ## Do a final check to see that the file was downloaded
                     ## and is of the proper size:
@@ -249,24 +252,25 @@
                     ## curl implementation of download.file() as it relates
                     ## only to the status of the download.
                     tryCatch({
-                        # suppressMessages(
-                        download.file(
-                            iterFTPSRRFileURL,
-                            destfile = iterSRRFileDownloadPath,
-                            method = "curl",
-                            mode = "wb"
+                        suppressMessages(
+                            download.file(
+                                iterFTPSRRFileURL,
+                                destfile = iterSRRFileDownloadPath,
+                                method = "curl",
+                                mode = "wb"
+                            )
                         )
-                        # )
                     }, error = function(cond) {
-                        Sys.sleep(downloadErrorWaitTime)
+                        Sys.sleep(5)
                     })
 
                     ## Increment the iterSRRDownloadFailCount.
                     iterSRRDownloadFailCount <- (iterSRRDownloadFailCount + 1)
-                }
 
-                ## On success or error out, wait 5 seconds standard.
-                Sys.sleep(5)
+                    ## Wait an additional 5 seconds to avoid overloading the
+                    ## site.
+                    Sys.sleep(5)
+                }
 
                 ## Do a final check to see that the file was downloaded
                 ## and is of the proper size:
@@ -327,6 +331,12 @@
 #' files even when the final GSM .fastq files associated with those SRRs
 #' (compiled by the 'combineSRRFastqsToGSMs' function) is present, otherwise set
 #' to FALSE to not. Defaults to FALSE.
+#' @param SRRDownloadNodeCount Specify a maximum number of nodes to use when
+#' downloading SRR .fastqs. Try setting to a relatively
+#' low number (like 1) if the function is having difficulty in acquiring the
+#' fastq files (and there are many "FAILED" values in the
+#' 'SRR_file_download_status' column of the returned data frame). Defaults to
+#' 12.
 #' @return Downloads and checks the .fastq files to the directory specified as
 #' the `localDownloadDirectory`. The function will also return the dataframe
 #' given as the `identifySRRsFromGSMIDsDF` argument with an additional column
@@ -341,13 +351,13 @@
 #' ## 'identifySRRsFromGSMIDs' function to the user's working directory.
 #'
 #' ## Load the example dataset.
-#' exampleDFGEODownloadR <- utils::data(
+#' utils::data(
 #'     "exampleDFGEODownloadR",
 #'     package = "GEODownloadR"
 #' )
 #'
 #' ## Download the SRR .fastqs. There should be a total of 11 .fastq files
-#' ## donwloaded.
+#' ## downloaded.
 #' returnValue <- SRRFastqDownload(
 #'     identifySRRsFromGSMIDsDF = exampleDFGEODownloadR
 #' )
@@ -355,7 +365,8 @@
 SRRFastqDownload <- function(
     identifySRRsFromGSMIDsDF,
     localDownloadDirectory = getwd(),
-    downloadSRRWithGSMPresent = FALSE
+    downloadSRRWithGSMPresent = FALSE,
+    SRRDownloadNodeCount = 12
 ) {
 
     ## Verify the identifySRRsFromGSMIDsDF.
@@ -363,6 +374,14 @@ SRRFastqDownload <- function(
     ## First ensure the object that is given to the identifySRRsFromGSMIDsDF
     ## argument is a dataframe (or matrix could work).
     .isDataFrameOrMatrix(identifySRRsFromGSMIDsDF)
+
+    ## Verify the SRRDownloadNodeCount argument.
+    if (!.isSinglePositiveInteger(SRRDownloadNodeCount)) {
+        stop(
+            "The `SRRDownloadNodeCount` argument must be a singular ",
+            "positive integer value."
+        )
+    }
 
     ## Then, ensure all the relevant columns are present in the data frame or
     ## matrix given as the identifySRRsFromGSMIDsDF.
@@ -432,7 +451,7 @@ SRRFastqDownload <- function(
     original_options <- options()
 
     ## Reset the timeout value so we don't lose the file download:
-    options(timeout = max(12000, getOption("timeout")))
+    options(timeout = max(21600, getOption("timeout")))
 
     ## Set a trigger to restore the user's options when the function ends.
     on.exit(options(original_options))
@@ -445,9 +464,9 @@ SRRFastqDownload <- function(
         ftpSRRFileURLs = identifySRRsFromGSMIDsDF$Fastq_URLs,
         SRRFastqNames = identifySRRsFromGSMIDsDF$Fastq_file_names,
         SRRFastqFileSizes = identifySRRsFromGSMIDsDF$Fastq_file_sizes,
-        downloadErrorWaitTime = 30,
         internalDownloadSRRWithGSMPresent = downloadSRRWithGSMPresent,
-        internalLocalDownloadDirectory = localDownloadDirectory
+        internalLocalDownloadDirectory = localDownloadDirectory,
+        internalSRRDownloadNodeCount = SRRDownloadNodeCount
     )
 
     ## Do a second check and run for files that didn't download properly.
@@ -477,9 +496,9 @@ SRRFastqDownload <- function(
             SRRFastqFileSizes = identifySRRsFromGSMIDsDF$Fastq_file_sizes[
                 failedSRRDownloadVecIters
             ],
-            downloadErrorWaitTime = 30,
             internalDownloadSRRWithGSMPresent = downloadSRRWithGSMPresent,
-            internalLocalDownloadDirectory = localDownloadDirectory
+            internalLocalDownloadDirectory = localDownloadDirectory,
+            internalSRRDownloadNodeCount = SRRDownloadNodeCount
         )
 
         ## Add the results for the redownloaded files back into the main

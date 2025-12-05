@@ -27,10 +27,11 @@ user's working directory.}
 \value{
 Combines the previously downloaded SRR .fastq files in the directory
 specified as the \code{localDownloadDirectory} into .fastq files for each GSM ID.
-These GSM IDs will be deposited in the directory  The function will also return the dataframe
-given as the \code{identifySRRsFromGSMIDsDF} argument with an additional column
-named "SRR_file_download_status" noting the status of the download of each
-.fastq file.
+These GSM IDs will be deposited in the directory specified as the
+\code{outputGSMFastqDirectory}. The function will also return the data frame given
+as the \code{SRRFastqDownloadDF} with an additional column named
+"GSMCombinationStatus" noting the status of the combination of the .fastq
+files for each GSM ID present.
 }
 \description{
 This function takes a data frame with information on SRR IDs and the state of
@@ -50,7 +51,7 @@ the individual SRRs.
 ## WORKING DIRECTORY.
 
 ## Load the example dataset.
-exampleDFGEODownloadR <- utils::data(
+utils::data(
     "exampleDFGEODownloadR",
     package = "GEODownloadR"
 )

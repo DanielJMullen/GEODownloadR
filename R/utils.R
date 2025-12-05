@@ -24,6 +24,32 @@
     return(is.character(x) && !is.matrix(x))
 }
 
+## Write an internal function to check if a given object is a single positive
+## integer value in order to verify arguments of package functions. Note: the
+## !is.matrix() clause prevents a 1x1 vector from being registered as a
+## valid value still.
+.isSinglePositiveInteger <- function (x) {
+
+    ## Check if x is numeric.
+    isNumeric <- is.numeric(x)
+
+    ## Check if x has a length of 1.
+    isSingle <- (length(x) == 1)
+
+    ## Check that x isn't a matrix of length 1.
+    isNoMatrix <- !is.matrix(x)
+
+    ## Check if x is a whole number. Use of all.equal ensures integers given as
+    ## decimals (i.e. 5.0) are still valid.
+    isWhole <- (isNumeric && isTRUE(all.equal(x, as.integer(x))))
+
+    ## Check if x positive.
+    isPositive <- (isNumeric && x > 0)
+
+    ## Combine all conditions (isNumeric is already accounted for).
+    return((isSingle && isNoMatrix && isWhole && isPositive))
+}
+
 ## Write an internal function to check if a given object is a data frame or
 ## matrix in order to verify arguments of package functions.
 .isDataFrameOrMatrix <- function (x) {
