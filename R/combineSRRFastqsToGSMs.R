@@ -327,7 +327,7 @@
 
                 ## Determine the fastq file that will be created for the GSM.
                 GSMFastqPath <- file.path(
-                    internalLocalDownloadDirectory,
+                    internalOutputGSMFastqDirectory,
                     paste0(
                         iterUniqueGSMID,
                         ".fastq.gz"
