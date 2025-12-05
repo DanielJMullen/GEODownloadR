@@ -22,7 +22,7 @@
     ## Create a list of the nodes that will be used, and then register them for
     ## use with the foreach package. Up to 60 nodes will be used by default.
     combineGSMClusterList <- parallel::makeCluster(
-        min(length(ftpSRRFileURLs), 60)
+        min(length(uniqueGSMIDValues), 60)
     )
     doParallel::registerDoParallel(combineGSMClusterList)
 
