@@ -2,4 +2,5 @@
 
 export(SRRFastqDownload)
 export(combineSRRFastqsToGSMs)
+export(completeGEODownloadRWorkflow)
 export(identifySRRsFromGSMIDs)

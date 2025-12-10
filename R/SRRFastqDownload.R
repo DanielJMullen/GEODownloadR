@@ -426,7 +426,7 @@ SRRFastqDownload <- function(
     }
 
     ## Next ensure that the path exists.
-    if (!file.exists(localDownloadDirectory)) {
+    if (!dir.exists(localDownloadDirectory)) {
         stop(
             "The path given as the `localDownloadDirectory` argument doesn't ",
             "seem to exist. Please give a valid path to download .fastq files ",

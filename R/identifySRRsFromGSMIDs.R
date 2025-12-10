@@ -1080,6 +1080,12 @@ identifySRRsFromGSMIDs <- function(
         all.y = TRUE
     )
 
+    ## Convert the Total_reads column to numeric (as it gets saved as a
+    ## character).
+    informationDFMerge$Total_reads <- as.numeric(
+        informationDFMerge$Total_reads
+    )
+
     ## Run the .SRRFileIdentificationFunction to get the paths to the SRR file
     ## URLs and the name of the SRR fastq files on the ENA server.
     SRRIdentificationDF <- as.data.frame(

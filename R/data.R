@@ -27,7 +27,7 @@
 #'   \item{\code{SRR_ID_URLs}}{(character) Links to the pages for each of the
 #'      SRR IDs on the ENA website.
 #'   }
-#'   \item{\code{Total_reads}}{(character) The total number of reads in each
+#'   \item{\code{Total_reads}}{(double) The total number of reads in each
 #'      SRR .fastq file (as listed from the given file's associated SRX page).
 #'   }
 #'   \item{\code{Approximate_total_bases}}{(character) The approximate total
@@ -60,12 +60,14 @@
 #'   \item{\code{Fastq_URLs}}{(character) Links to each SRR .fastq file on the
 #'      ENA FTP server.
 #'   }
-#'   \item{\code{Fastq_file_names}}{(character) The name of the .fastq files.}
+#'   \item{\code{Fastq_file_names}}{(character) The name of the SRR .fastq
+#'      files.
+#'   }
 #'   \item{\code{Fastq_file_sizes}}{(double) The exact size of the gzipped
-#'      .fastq files.
+#'      SRR .fastq files.
 #'   }
 #'   \item{\code{Fastq_file_first_upload_date}}{(character) The date each
-#'      .fastq file was first uploaded to the ENA server.
+#'      SRR .fastq file was first uploaded to the ENA server.
 #'   }
 #'   \item{\code{Passed_GSE_information}}{(character) Values note whether the
 #'      GSM ID URL, as well as the SRX and GSE IDs and URLs associated with the
@@ -101,6 +103,25 @@
 #'      "SRR_FILE_ALREADY_DOWNLOADED" if the SRR .fastq file is already present
 #'      and of the correct size, or "PASS" if the file was successfully
 #'      downloaded.
+#'   }
+#'   \item{\code{GSMCombinationStatus}}{(character) Values note whether the
+#'      SRR .fastq files were successfully combined into overall .fastq files
+#'      annotated to each of the GSM IDs. Values are
+#'      "PROPER_SEQUENCING_FORMAT_NOT_RECOGNIZED" if the Sequencing_type value
+#'      is NA, or doesn't match for all the SRR entries annotated to a single
+#'      unique GSM ID, "ALL_SRR_FILES_NOT_PRESENT" if not all the SRR .fastq
+#'      files which need to be combined into a given GSM .fastq file are
+#'      present in the specified directory, "IMPROPER_FILE_PAIRING_DETECTED"
+#'      where an incorrect number of SRR .fastq files are present for a given
+#'      sequencing type (i.e. an odd number of SRR .fastqs are present when the
+#'      experiment should be paired), "GSM_FASTQ_NOT_CREATED" if there was some
+#'      other error which prevented the GSM .fastq file from being created,
+#'      "GSM_FASTQ_FILE_ALREADY_PRESENT" if the combined GSM .fastq file is
+#'      already present, "PASS_PAIRED_END_1_CREATED" when the first paired end
+#'      file for a GSM is created, but the second is already present, and
+#'      conversely "PASS_PAIRED_END_2_CREATED" when the second paired end file
+#'      is created but the first is already present, and finally "PASS" when the
+#'      GSM .fastq file was successfully combined without other notes.
 #'   }
 #'}
 "exampleDFGEODownloadR"
