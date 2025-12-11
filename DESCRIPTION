@@ -11,4 +11,4 @@ RoxygenNote: 7.3.3
 Depends: R (>= 3.5.0)
 BiocType: Software
 biocViews: Software, BiomedicalInformatics, Genetics
-Imports: graphics, grDevices, stats, utils, tools, S4Vectors, doParallel, foreach, parallel, Rfastp
+Imports: graphics, grDevices, stats, utils, tools, S4Vectors, doParallel, foreach, parallel
