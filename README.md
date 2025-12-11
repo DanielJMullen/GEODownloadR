@@ -21,19 +21,14 @@ if (!requireNamespace("devtools", quietly = TRUE)) {
     install.packages("devtools")
 }
 
+## Rfastp is depreciated on Bioconductor, so for now we also need to load that from their Github page.
+devtools::install_github("RockefellerUniversity/Rfastp")
+
 ## Use install_github to install the GEODownloadR package.
 devtools::install_github("DanielJMullen/GEODownloadR")
 
 ## Load the library
 library(GEODownloadR)
-
-## It is possible the Rfastp package may need to be manually installed.
-## If errors are encountered due to this, try installing Rfastp with the
-## following:
-if (!require("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-
-BiocManager::install("Rfastp")
 ```
 
 ### Running GEODownloadR
