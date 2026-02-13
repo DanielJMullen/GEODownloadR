@@ -292,7 +292,7 @@ completeGEODownloadRWorkflow <- function(
 
         failedGSMIDsResultsDF <- SRRFastqDownload(
             failedGSMIDsResultsDF,
-            localDownloadDirectory = GEODownloadR::localDownloadDirectory,
+            localDownloadDirectory = localDownloadDirectory,
             downloadSRRWithGSMPresent = downloadSRRWithGSMPresent,
             SRRDownloadNodeCount = SRRDownloadNodeCount
         )
